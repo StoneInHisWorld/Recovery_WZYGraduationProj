@@ -22,10 +22,10 @@ class data_process:
         :param train: 训练集比例
         :param test: 测试集比例
         :param valid: 验证集比例
-        :return: （训练特征集，训练标签集，[验证特征集，验证标签集]，测试特征集，测试标签集）
+        :return: None
         """
         assert train + test + valid == 1.0, '训练集、测试集、验证集比例之和须为1'
-        assert self.__is_splitted__ == False, '已经进行了数据集分割！'
+        assert self.__is_splitted__ is False, '已经进行了数据集分割！'
         # assert self.__prepared__ is True, '请先对数据进行预处理，再进行数据集分割'
         data_len = self.__features__.shape[0]
         train_len = int(data_len * train)
@@ -37,12 +37,8 @@ class data_process:
             self.__features__[train_start:train_end],
             self.__labels__[train_start:train_end]
         ]
-        # self.__train_data__.append(self.__features__[train_start:train_end])
-        # self.__train_data__.append(self.__labels__[train_start:train_end])
         if valid > 0:
             # 如需要分割验证集
-            # return self.__features__.split((train_len, valid_len, test_len)), \
-            #        self.__labels__.split((train_len, valid_len, test_len))
             self.__valid__ = True
             valid_start, valid_end = train_end, int(train_end + valid_len)
             test_start, test_end = valid_end, int(valid_end + test_len)
@@ -52,22 +48,11 @@ class data_process:
             self.__test_data__ = [
                 self.__features__[test_start:test_end], self.__labels__[test_start:test_end]
             ]
-            # self.__valid_data__ = self.__features__[valid_start:valid_end], self.__labels__[valid_start:valid_end]
-            # self.__test_data__ = self.__features__[test_start:test_end], self.__labels__[test_start:test_end]
-
-            # return self.__train_data__, self.__valid_data__, self.__test_data__
         else:
-            # return self.__features__.split((train_len, test_len)), \
-            #        self.__labels__.split((train_len, test_len))
             test_start, test_end = train_end, int(train_end + test_len)
             self.__test_data__ = [
                 self.__features__[test_start:test_end], self.__labels__[test_start:test_end]
             ]
-            # self.__test_data__ = self.__features__[test_start:test_end], self.__labels__[test_start:test_end]
-            # self.__is_splitted__ = True
-            # return self.__features__[train_start:train_end], self.__labels__[train_start:train_end], \
-            #        self.__features__[test_start:test_end], self.__labels__[test_start:test_end]
-            # return self.__train_data__, self.__test_data__
         self.__is_splitted__ = True
 
     def preprocess(self, mode='linear', need_tensor=False, need_norm=True):
@@ -90,12 +75,6 @@ class data_process:
         assert self.__mode__ == 'linear'
         assert self.__is_splitted__, '请先进行数据集分割，再进行数据预处理！'
         # 预处理训练集
-        # train_data = self.__train_data__ + self.__valid_data__ \
-        #     if self.__valid__ else self.__train_data__
-        # for i, d in enumerate(train_data):
-        #     d[i] = self.__flatten__(d)
-        # self.
-        # 预处理训练集
         for i, d in enumerate(self.__train_data__):
             d = self.__flatten__(d)
             d = self.__normalize__(d) if need_norm else d
@@ -113,35 +92,6 @@ class data_process:
             d = self.__flatten__(d)
             d = self.__to_Tensor__(d, requires_grad=False) if need_tensor else d
             self.__test_data__[i] = d
-        # for d in self.__train_data__:
-        #     d = self.__flatten__(d)
-            # self.__train_data__[0] = self.__flatten__(self.__train_data__[0])
-        # self.__train_data__ = self.__flatten__(*self.__train_data__)
-        # self.__train_data__ = self.__normalize__(self.__train_data__) if need_norm else self.__train_data__
-        # self.__train_data__ = self.__to_Tensor__(self.__train_data__) if need_tensor else self.__train_data__
-        # 预处理验证集
-        # if self.__valid__:
-        #     self.__valid_data__ = self.__flatten__(self.__valid_data__)
-        #     self.__valid_data__ = self.__normalize__(self.__valid_data__) if need_norm else self.__valid_data__
-        #     self.__valid_data__ = self.__to_Tensor__(self.__valid_data__) if need_tensor else self.__valid_data__
-        # else:
-        #     train_data = [d for d in self.__train_data__]
-        # test_data = [d for d in self.__test_data__]
-        # # 展平数据
-        # for d in train_data + test_data:
-        #     # res = self.__flatten__(d)
-        #     # d = self.__flatten__(d)
-        #     d = self.__flatten__(d)
-        # # 进行标准化
-        # if need_norm is True:
-        #     for d in train_data:
-        #         d = self.__normalize__(d)
-        # # # 转换成张量
-        # # if need_tensor is True:
-        # #     for d in zip(*train_data, *self.__train_data__):
-        # #         d = self.__to_Tensor__(d)
-        #     # features = self.__normalize__(features)
-        #     # labels = self.__normalize__(labels)
 
 
     @staticmethod

@@ -6,23 +6,24 @@ import torch
 from torch import nn
 from tqdm import tqdm
 
-from utils.decorators import InitNet, UnpackTrainParameters
+from utils import tool_func
+from utils.decorators import init_net, unpack_kwargs
 from utils.tool_func import get_activation
 
 
 class MultiLayerPerception(nn.Sequential):
 
-    @InitNet
+    @init_net
     def __init__(self, in_features: int, out_features: int, parameters=None):
         """
         建立一个多层感知机。直接将变量名作为方法，输入输入数据集，就可以得到模型的输出数据集。
         :param in_features: 输入特征向量维度
         :param out_features: 输出标签向量维度
         :param parameters: 可选关键字参数：
-            `activation`: 激活函数，可选['ReLU', 'Sigmoid', 'Tanh', 'LeakyReLU']
-            `para_init`: 初始化函数，可选['normal', 'xavier', 'zero']
-            `dropout`: dropout比例。若为0则不加入dropout层
-            `base`: 神经网络构建衰减指数。**可能会出现无法进行矩阵运算的错误，请届时更改本参数！**
+            'activation': 激活函数，可选['ReLU', 'Sigmoid', 'Tanh', 'LeakyReLU']
+            'para_init': 初始化函数，可选['normal', 'xavier', 'zero']
+            'dropout': dropout比例。若为0则不加入dropout层
+            'base': 神经网络构建衰减指数。**可能会出现无法进行矩阵运算的错误，请届时更改本参数！**
         """
         activation, dropout, base = parameters
         # 构建模块层
@@ -42,7 +43,18 @@ class MultiLayerPerception(nn.Sequential):
                 layers.append(nn.Dropout())
         super().__init__(nn.BatchNorm1d(in_features), *layers)
 
-    @UnpackTrainParameters
+    train_args = {
+        'num_epochs': (100, []),
+        'learning_rate': (0.001, []),
+        'weight_decay': (0.1, []),
+        'batch_size': (4, []),
+        'loss': ('mse', ['l1', 'crossEntro', 'mse', 'huber']),
+        'momentum': (0, []),
+        'shuffle': (True, [True, False]),
+        'optimizer': ('SGD', ['SGD', 'Adam'])
+    }
+
+    @unpack_kwargs(allow_args=train_args)
     def train_(self, train_features, train_labels, valid_features=None,
                valid_labels=None, parameters=None):
         """
@@ -52,18 +64,23 @@ class MultiLayerPerception(nn.Sequential):
         :param valid_features: 进行验证的特征集（可选）
         :param valid_labels: 进行验证的标签集（可选）
         :param parameters: 额外参数。可选：
-            `num_epochs`: 迭代次数
-            `learning_rate`: 学习率
-            `weight_decay`: 权重衰减
-            `batch_size`: 批量大小
-            `loss`: 损失函数，支持['l1', 'crossEntro', 'mse', 'huber']
-            `momentum`: 动量
-            `shuffle`: 训练时是否打乱数据集
-            `optimizer`: 优化器,支持['SGD', 'Adam']
+            'num_epochs': 迭代次数
+            'learning_rate': 学习率
+            'weight_decay': 权重衰减
+            'batch_size': 批量大小
+            'loss': 损失函数，支持['l1', 'crossEntro', 'mse', 'huber']
+            'momentum': 动量
+            'shuffle': 训练时是否打乱数据集
+            'optimizer': 优化器,支持['SGD', 'Adam']
         :return: 训练损失列表（记录每次迭代的损失值），验证损失列表
         """
         num_epochs, learning_rate, weight_decay, batch_size, loss, momentum, shuffle, \
             optimizer = parameters
+        loss = tool_func.get_lossFunc(loss)
+        optimizer = tool_func.get_Optimizer(
+            self, optim_str=optimizer, learning_rate=learning_rate,
+            weight_decay=weight_decay, momentum=momentum
+        )
         train_ls, valid_ls = [], []
         train_iter = self.load_array(
             train_features, train_labels, batch_size, num_epochs, shuffle
@@ -72,7 +89,7 @@ class MultiLayerPerception(nn.Sequential):
         print('使用的损失函数：', loss)
         # 进度条
         with tqdm(total=num_epochs, unit='epoch', desc='Iterating') as pbar:
-            # 迭代一批次
+            # 迭代一个批次
             for X, y in train_iter:
                 self.train()
                 optimizer.zero_grad()
