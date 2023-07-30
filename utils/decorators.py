@@ -56,15 +56,12 @@ def unpack_kwargs(allow_args: dict):
     return unpack_decorator
 
 
-init_args = {
-    'activation': ('ReLU', ['ReLU', 'Sigmoid', 'Tanh', 'LeakyReLU']),
-    'para_init': ('zero', ['normal', 'xavier', 'zero']),
-    'dropout': (0, []),
-    'base': (2, [])
-}
-
-
 def init_net(init_func):
+    """
+    对网络进行初始化的装饰器。负责拆解参数，搭建网络后对网络权重参数进行初始化，并进行设备迁移
+    :param init_func: 被修饰的函数
+    :return: __init__函数装饰函数
+    """
     @wraps(init_func)
     def wrapper(*args, **kwargs):
         parameters = \
@@ -73,6 +70,7 @@ def init_net(init_func):
             kwargs['base'] if 'base' in kwargs.keys() else 2
         init_func(*args, parameters=parameters)
         init_method = kwargs['para_init'] if 'para_init' in kwargs.keys() else 'normal'
+        # init_method = parameters[1] if 'para_init' in kwargs.keys() else 'normal'
         # 初始化网络权重参数
         net = args[0]
         tool_func.init_netWeight(net, init_method)

@@ -12,6 +12,12 @@ from utils.tool_func import get_activation
 
 
 class MultiLayerPerception(nn.Sequential):
+    init_args = {
+        'activation': ('ReLU', ['ReLU', 'Sigmoid', 'Tanh', 'LeakyReLU']),
+        'para_init': ('zero', ['normal', 'xavier', 'zero']),
+        'dropout': (0, []),
+        'base': (2, [])
+    }
 
     @init_net
     def __init__(self, in_features: int, out_features: int, parameters=None):
@@ -87,6 +93,8 @@ class MultiLayerPerception(nn.Sequential):
         )
         print('优化器参数：', optimizer.state_dict)
         print('使用的损失函数：', loss)
+        print(f'训练batch大小：{batch_size}')
+        print(f'是否打乱数据集：{shuffle}')
         # 进度条
         with tqdm(total=num_epochs, unit='epoch', desc='Iterating') as pbar:
             # 迭代一个批次
