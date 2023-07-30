@@ -1,9 +1,10 @@
 from functools import wraps
 
 import numpy as np
+import pandas as pd
 import torch
 import utils.tool_func as tools
-from utils.decorators import read_data
+from utils.decorators import read_data, unpack_kwargs
 
 input_files = {
     '__features__': 'folder/img',
@@ -68,7 +69,14 @@ class DataProcess:
             ]
         self.__is_splitted__ = True
 
-    def preprocess(self, mode='linear', need_tensor=False, need_norm=True):
+    # preprocess_args = {
+    #     'mode': ('linear', ['linear', 'none', 'one_hot']),
+    #     'need_tensor': (False, []),
+    #     'need_norm': (True, [])
+    # }
+
+    # def preprocess(self, mode='linear', need_tensor=False, need_norm=True):
+    def preprocess(self, need=frozenset()):
         """
         对对象中数据进行预处理，将对象的__prepared__标记为True
         :param need_norm: 是否需要标准化
@@ -76,35 +84,105 @@ class DataProcess:
         :param mode: 预处理模式，包括'linear'
         :return: None
         """
-        mode_list = ['linear', 'none']
         assert self.__prepared__ is False, '已经进行了预处理！'
-        assert mode in mode_list, f'mode参数{mode}须为{mode_list}其中一个'
-        if mode == 'linear':
-            self.__mode__ = 'linear'
-            self.__linear_preprocess__(need_norm=need_norm, need_tensor=need_tensor)
+        func = frozenset(['flatten', 'norm', 'tensor', 'onehot'])
+        assert need.issubset(func), f'无法满足的需求{need}, 提供的功能包括{func}'
+        # mode_list = ['linear', 'none', 'one_hot']
+        # assert mode in mode_list, f'mode参数{mode}须为{mode_list}其中一个'
+        # mode, need_tensor, need_norm = parameters
+        # if mode == 'linear':
+        #     self.__mode__ = 'linear'
+        #     self.__linear_preprocess__(need_norm=need_norm, need_tensor=need_tensor)
+        if 'flatten' in need:
+            self.__flatten_preprocess__()
+        if 'norm' in need:
+            self.__norm_preprocess__()
+        if 'onehot' in need:
+            self.__onehot_preprocess__()
+        if 'tensor' in need:
+            self.__tensor_preprocess__()
         self.__prepared__ = True
 
-    def __linear_preprocess__(self, need_norm=True, need_tensor=True):
-        assert self.__mode__ == 'linear'
-        assert self.__is_splitted__, '请先进行数据集分割，再进行数据预处理！'
+    def __flatten_preprocess__(self):
         # 预处理训练集
         for i, d in enumerate(self.__train_data__):
             d = self.__flatten__(d)
-            d = self.__normalize__(d) if need_norm else d
-            d = self.__to_Tensor__(d) if need_tensor else d
             self.__train_data__[i] = d
         # 预处理验证集
         if self.__valid__:
             for i, d in enumerate(self.__valid_data__):
                 d = self.__flatten__(d)
-                d = self.__normalize__(d) if need_norm else d
-                d = self.__to_Tensor__(d) if need_tensor else d
                 self.__valid_data__[i] = d
         # 预处理测试集
         for i, d in enumerate(self.__test_data__):
             d = self.__flatten__(d)
-            d = self.__to_Tensor__(d, requires_grad=False) if need_tensor else d
             self.__test_data__[i] = d
+
+    def __norm_preprocess__(self):
+        # 预处理训练集
+        for i, d in enumerate(self.__train_data__):
+            d = self.__normalize__(d)
+            self.__train_data__[i] = d
+        # 预处理验证集
+        if self.__valid__:
+            for i, d in enumerate(self.__valid_data__):
+                d = self.__normalize__(d)
+                self.__valid_data__[i] = d
+
+    def __tensor_preprocess__(self):
+        # 预处理训练集
+        for i, d in enumerate(self.__train_data__):
+            d = self.__to_Tensor__(d)
+            self.__train_data__[i] = d
+        # 预处理验证集
+        if self.__valid__:
+            for i, d in enumerate(self.__valid_data__):
+                d = self.__to_Tensor__(d)
+                self.__valid_data__[i] = d
+        # 预处理测试集
+        for i, d in enumerate(self.__test_data__):
+            d = self.__to_Tensor__(d, requires_grad=False)
+            self.__test_data__[i] = d
+
+    def __onehot_preprocess__(self):
+        # 预处理训练集
+        _, train_labels = self.__train_data__
+        self.__train_data__ = _, self.__get_dummies__(train_labels)
+        # 预处理验证集
+        if self.__valid__:
+            _, valid_labels = self.__valid_data__
+            self.__valid_data__ = _, self.__get_dummies__(valid_labels)
+        # 预处理测试集
+        _, test_labels = self.__test_data__
+        self.__test_data__ = _, self.__get_dummies__(test_labels)
+
+    @staticmethod
+    def __get_dummies__(data):
+        pass
+
+
+
+    # def __linear_preprocess__(self, need_norm=True, need_tensor=True):
+    #     assert self.__mode__ == 'linear'
+    #     assert self.__is_splitted__, '请先进行数据集分割，再进行数据预处理！'
+    #     # 预处理训练集
+    #     for i, d in enumerate(self.__train_data__):
+    #         d = self.__flatten__(d)
+    #         d = self.__normalize__(d) if need_norm else d
+    #         d = self.__to_Tensor__(d) if need_tensor else d
+    #         self.__train_data__[i] = d
+    #     # 预处理验证集
+    #     if self.__valid__:
+    #         for i, d in enumerate(self.__valid_data__):
+    #             d = self.__flatten__(d)
+    #             d = self.__normalize__(d) if need_norm else d
+    #             d = self.__to_Tensor__(d) if need_tensor else d
+    #             self.__valid_data__[i] = d
+    #     # 预处理测试集
+    #     for i, d in enumerate(self.__test_data__):
+    #         d = self.__flatten__(d)
+    #         d = self.__to_Tensor__(d, requires_grad=False) if need_tensor else d
+    #         self.__test_data__[i] = d
 
     @staticmethod
     def __to_Tensor__(data, requires_grad=True):
@@ -115,9 +193,6 @@ class DataProcess:
     @staticmethod
     def __normalize__(data):
         data = np.array(data)
-        # mean = data.mean(axis=1)
-        # std = data.std(axis=1)
-        # print(data.std(axis=1))
         return np.apply_along_axis(
             lambda x: (x - x.mean()) / x.std()
             if x.std() != 0 else x - x.mean(),
@@ -128,17 +203,6 @@ class DataProcess:
     def __flatten__(data):
         oriShape = data.shape
         return data.reshape((oriShape[0], -1))
-
-    # @staticmethod
-    # def __try_gpu__(i=0):
-    #     """
-    #     获取一个GPU
-    #     :param i: GPU编号
-    #     :return: 获取成功，则返回GPU，否则返回CPU
-    #     """
-    #     if torch.cuda.device_count() >= i + 1:
-    #         return torch.device(f'cuda:{i}')
-    #     return torch.device('cpu')
 
     @staticmethod
     def accuracy(y_hat, y):

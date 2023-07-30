@@ -66,7 +66,6 @@ def try_gpu(i=0):
     :param i: GPU编号
     :return: 第i号GPU。若GPU不可用，则返回CPU
     """
-    print(torch.cuda.is_available())
     if torch.cuda.device_count() >= i + 1:
         return torch.device(f'cuda:{i}')
     return torch.device('cpu')
@@ -125,3 +124,4 @@ def read_img(path: str) -> np.ndarray:
 
 def read_csv(path: str) -> np.ndarray:
     return pd.read_csv(path, names=label_names).values
+

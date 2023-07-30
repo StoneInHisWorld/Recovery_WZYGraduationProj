@@ -12,6 +12,7 @@ from utils.tool_func import get_activation
 
 
 class MultiLayerPerception(nn.Sequential):
+
     init_args = {
         'activation': ('ReLU', ['ReLU', 'Sigmoid', 'Tanh', 'LeakyReLU']),
         'para_init': ('zero', ['normal', 'xavier', 'zero']),
@@ -32,6 +33,7 @@ class MultiLayerPerception(nn.Sequential):
             'base': 神经网络构建衰减指数。**可能会出现无法进行矩阵运算的错误，请届时更改本参数！**
         """
         activation, dropout, base = parameters
+        print('GPU可用否：', torch.cuda.is_available())
         # 构建模块层
         layers = []
         layer_sizes = np.logspace(

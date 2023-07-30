@@ -1,3 +1,4 @@
+import torch
 from torch import nn
 import numpy as np
 
@@ -19,6 +20,7 @@ class SoftmaxMLP(nn.Sequential):
             'base': 神经网络构建衰减指数。**可能会出现无法进行矩阵运算的错误，请届时更改本参数！**
         """
         activation, dropout, base = parameters
+        print('GPU可用否：', torch.cuda.is_available())
         # 构建模块层
         layers = []
         layer_sizes = np.logspace(

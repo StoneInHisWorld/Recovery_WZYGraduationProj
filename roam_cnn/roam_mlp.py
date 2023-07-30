@@ -1,12 +1,7 @@
-import os
-
-import numpy as np
-import pandas as pd
-
 from matplotlib import pyplot as plt
-from utils.dataprocess import DataProcess
-from network.mlp import MultiLayerPerception
 
+from network.mlp import MultiLayerPerception
+from utils.dataprocess import DataProcess
 
 print('collecting data...')
 # small_data = False
@@ -62,6 +57,9 @@ train_ls, valid_ls = net.train_(
     num_epochs=num_epochs, batch_size=batch_size, weight_decay=weight_decay,
     learning_rate=learning_rate, loss=loss
 )
+
+
+print('plotting...')
 plt.plot(range(num_epochs), train_ls)
 plt.xlabel('num_epochs')
 plt.ylabel(f'train_loss({loss})')
