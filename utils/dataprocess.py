@@ -1,15 +1,28 @@
+from functools import wraps
+
 import numpy as np
 import torch
+import utils.tool_func as tools
+from utils.decorators import read_data
+
+input_files = {
+    '__features__': 'folder/img',
+    '__labels__': 'csv'
+}
 
 
-class data_process:
+class DataProcess:
 
-    def __init__(self, **kwargs):
+    @read_data(input_files)
+    # def __init__(self, **kwargs):
+    def __init__(self, files: dict = None):
         self.__test_data__ = []
         self.__valid_data__ = []
         self.__train_data__ = []
-        self.__features__ = kwargs['features']
-        self.__labels__ = kwargs['labels']
+        for k, v in files.items():
+            setattr(self, k, v)
+        # self.__features__ = files['features']
+        # self.__labels__ = files['labels']
         self.__is_splitted__ = False
         self.__mode__ = None
         self.__prepared__ = False
@@ -93,11 +106,10 @@ class data_process:
             d = self.__to_Tensor__(d, requires_grad=False) if need_tensor else d
             self.__test_data__[i] = d
 
-
     @staticmethod
     def __to_Tensor__(data, requires_grad=True):
-        device = data_process.__try_gpu__(0)
-        return torch.tensor(data,  dtype=torch.float32,
+        device = tools.try_gpu(0)
+        return torch.tensor(data, dtype=torch.float32,
                             device=device, requires_grad=requires_grad)
 
     @staticmethod
@@ -108,7 +120,7 @@ class data_process:
         # print(data.std(axis=1))
         return np.apply_along_axis(
             lambda x: (x - x.mean()) / x.std()
-                if x.std() != 0 else x - x.mean(),
+            if x.std() != 0 else x - x.mean(),
             1, data
         )
 
@@ -117,16 +129,16 @@ class data_process:
         oriShape = data.shape
         return data.reshape((oriShape[0], -1))
 
-    @staticmethod
-    def __try_gpu__(i=0):
-        """
-        获取一个GPU
-        :param i: GPU编号
-        :return: 获取成功，则返回GPU，否则返回CPU
-        """
-        if torch.cuda.device_count() >= i + 1:
-            return torch.device(f'cuda:{i}')
-        return torch.device('cpu')
+    # @staticmethod
+    # def __try_gpu__(i=0):
+    #     """
+    #     获取一个GPU
+    #     :param i: GPU编号
+    #     :return: 获取成功，则返回GPU，否则返回CPU
+    #     """
+    #     if torch.cuda.device_count() >= i + 1:
+    #         return torch.device(f'cuda:{i}')
+    #     return torch.device('cpu')
 
     @staticmethod
     def accuracy(y_hat, y):
@@ -149,4 +161,3 @@ class data_process:
     @property
     def valid_data(self):
         return self.__valid_data__
-

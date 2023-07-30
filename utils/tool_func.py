@@ -1,5 +1,10 @@
 """以下是工具函数"""
+import os
+
+import numpy as np
+import pandas as pd
 import torch
+from matplotlib import pyplot as plt
 from torch import nn
 
 init_funcs = ['normal', 'xavier', 'zero']
@@ -8,6 +13,8 @@ activations = ['ReLU', 'Sigmoid', 'Tanh', 'LeakyReLU']
 losses = ['l1', 'crossEntro', 'mse', 'huber']
 train_para = ['num_epochs', 'learning_rate', 'weight_decay', 'batch_size',
               'optimizer', 'loss', 'momentum']
+support_files = ['img', 'csv']
+label_names = ['OAM1', 'OAM2']
 
 
 def get_activation(activ_str='ReLU'):
@@ -82,3 +89,39 @@ def init_netWeight(net, func_str):
                   nn.init.zeros_(m.weight) if type(m) == nn.Linear else m)
         net.apply(lambda m:
                   nn.init.zeros_(m.bias) if type(m) == nn.Linear else m)
+
+
+def get_readFunc(func):
+    assert func in support_files, f'不支持读取{func}文件，支持的文件包括{support_files}'
+    if func == 'img':
+        func = read_img
+    elif func == 'csv':
+        func = read_csv
+    return func
+
+
+def read_data(path: str, file_type: str) -> np.ndarray:
+    is_folder = True if file_type.split('/')[0] == 'folder' else False
+    data = []
+    if is_folder:
+        read_func = get_readFunc(file_type.split('/')[1])
+        walk_gen = os.walk(path)
+        for _, __, file_names in walk_gen:
+            file_names = sorted(
+                file_names, key=lambda name: int(name.split(".")[0])
+            )  # 给文件名排序！
+            for fn in file_names:
+                data.append(read_func(path + '/' + fn))
+    else:
+        read_func = get_readFunc(file_type)
+        data = read_func(path)
+    return np.array(data)
+
+
+def read_img(path: str) -> np.ndarray:
+    img = plt.imread(path)
+    return np.array(img)
+
+
+def read_csv(path: str) -> np.ndarray:
+    return pd.read_csv(path, names=label_names).values

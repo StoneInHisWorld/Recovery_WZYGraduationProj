@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 
-from utils.data_process import data_process
+from utils.dataprocess import DataProcess
 from classifier.multiRegressor import MultiRegressor
 
 print('collecting data...')
@@ -28,7 +28,7 @@ label_colNames = ['OAM1', 'OAM2']
 label_data = pd.read_csv(label_fileName, names=label_colNames).values
 
 print('preprocessing...')
-data_process = data_process(
+data_process = DataProcess(
     features=np.array(feature_data), labels=np.array(label_data)
 )
 
