@@ -13,11 +13,10 @@ data_process = DataProcess(__features__=feature_dir, __labels__=label_fileName)
 print('preprocessing...')
 """带softmax的感知机"""
 data_process.split_data(0.8, 0.1, 0.1)
-data_process.preprocess(mode='linear', need_tensor=True, need_norm=False)
+data_process.preprocess(need=frozenset(['tensor', 'flatten', 'norm', 'onehot']))
 train_features, train_labels = data_process.train_data
 test_features, test_labels = data_process.test_data
 valid_features, valid_labels = data_process.valid_data
-train_labels = DataProcess.get_dummies(train_labels)
 
 print('constructing network...')
 net = MultiLayerPerception(

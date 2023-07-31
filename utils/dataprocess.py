@@ -1,10 +1,9 @@
-from functools import wraps
-
 import numpy as np
 import pandas as pd
 import torch
+
 import utils.tool_func as tools
-from utils.decorators import read_data, unpack_kwargs
+from utils.decorators import read_data
 
 input_files = {
     '__features__': 'folder/img',
@@ -76,12 +75,10 @@ class DataProcess:
     # }
 
     # def preprocess(self, mode='linear', need_tensor=False, need_norm=True):
-    def preprocess(self, need=frozenset()):
+    def preprocess(self, need: frozenset= frozenset()):
         """
         对对象中数据进行预处理，将对象的__prepared__标记为True
-        :param need_norm: 是否需要标准化
-        :param need_tensor: 是否需要转换成张量
-        :param mode: 预处理模式，包括'linear'
+        :param need: 需求集合。将需要进行的预处理步骤对应字符串填入该集合，即可进行对应的预处理。
         :return: None
         """
         assert self.__prepared__ is False, '已经进行了预处理！'
@@ -95,10 +92,10 @@ class DataProcess:
         #     self.__linear_preprocess__(need_norm=need_norm, need_tensor=need_tensor)
         if 'flatten' in need:
             self.__flatten_preprocess__()
-        if 'norm' in need:
-            self.__norm_preprocess__()
         if 'onehot' in need:
             self.__onehot_preprocess__()
+        if 'norm' in need:
+            self.__norm_preprocess__()
         if 'tensor' in need:
             self.__tensor_preprocess__()
         self.__prepared__ = True
@@ -128,6 +125,13 @@ class DataProcess:
             for i, d in enumerate(self.__valid_data__):
                 d = self.__normalize__(d)
                 self.__valid_data__[i] = d
+        # # 预处理训练集
+        # train_features, _ = self.__train_data__
+        # self.__train_data__ = [self.__normalize__(train_features), _]
+        # # 预处理验证集
+        # if self.__valid__:
+        #     valid_features, _ = self.__valid_data__
+        #     self.__valid_data__ = [self.__normalize__(valid_features), _]
 
     def __tensor_preprocess__(self):
         # 预处理训练集
@@ -145,20 +149,41 @@ class DataProcess:
             self.__test_data__[i] = d
 
     def __onehot_preprocess__(self):
-        # 预处理训练集
-        _, train_labels = self.__train_data__
-        self.__train_data__ = _, self.__get_dummies__(train_labels)
-        # 预处理验证集
-        if self.__valid__:
-            _, valid_labels = self.__valid_data__
-            self.__valid_data__ = _, self.__get_dummies__(valid_labels)
-        # 预处理测试集
-        _, test_labels = self.__test_data__
-        self.__test_data__ = _, self.__get_dummies__(test_labels)
+        # 合并标签集
+        # _, train_labels = self.__train_data__
+        # __, valid_labels = self.__valid_data__ \
+        #     if self.__valid__ else np.array([]), np.array([])
+        # ___, test_labels = self.__test_data__
+        # labels = np.hstack([train_labels, valid_labels, test_labels])
+        labels = (self.__train_data__[1], self.__valid_data__[1], self.__test_data__[1]) \
+            if self.__valid__ else (self.__train_data__[1], self.__test_data__[1])
+        labels = np.vstack(labels)
+        # 计算独热编码
+        labels = self.__get_dummies__(labels)
+        # 赋值给类成员
+        train_len, valid_len, test_len = len(self.__train_data__[1]), \
+            len(self.__valid_data__[1]), len(self.__test_data__[1])
+        res = np.split(
+            labels, (train_len, train_len + valid_len)
+        )
+        train_labels, valid_labels, test_labels = res
+        self.__train_data__ = [self.__train_data__[0], train_labels]
+        self.__valid_data__ = [self.__valid_data__[0], valid_labels]
+        self.__test_data__ = [self.__test_data__[0], test_labels]
+        # self.__train_data__ = [_, self.__get_dummies__(train_labels)]
+        # # 预处理验证集
+        # if self.__valid__:
+        #     _, valid_labels = self.__valid_data__
+        #     self.__valid_data__ = [_, self.__get_dummies__(valid_labels)]
+        # # 预处理测试集
+        # _, test_labels = self.__test_data__
+        # self.__test_data__ = [_, self.__get_dummies__(test_labels)]
 
     @staticmethod
     def __get_dummies__(data):
-        pass
+        data = pd.DataFrame(data, columns=tools.label_names)
+        dummies = pd.get_dummies(data, columns=tools.label_names)
+        return np.array(dummies)
 
 
 

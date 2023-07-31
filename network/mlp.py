@@ -135,7 +135,7 @@ class MultiLayerPerception(nn.Sequential):
         # preds.append(self(f))
         # preds = torch.cat(preds, dim=1)
         # y_hat, y = torch.round(preds, decimals=1), torch.round(labels, decimals=1)
-        y_hat, y = torch.tensor(preds, device=labels.device), labels
+        y_hat, y = preds, labels
         del labels, preds, features
         correct = 0
         for i in range(len(y_hat)):

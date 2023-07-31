@@ -30,7 +30,8 @@ print('preprocessing...')
 # )
 """神经网络"""
 data_process.split_data(0.8, 0.1, 0.1)
-data_process.preprocess(mode='linear', need_tensor=True, need_norm=False)
+# data_process.preprocess(mode='linear', need_tensor=True, need_norm=False)
+data_process.preprocess(need=frozenset(['tensor', 'norm', 'flatten']))
 train_features, train_labels = data_process.train_data
 test_features, test_labels = data_process.test_data
 valid_features, valid_labels = data_process.valid_data
@@ -45,7 +46,7 @@ print(net)
 
 
 print('training...')
-num_epochs = 100
+num_epochs = 600
 batch_size = int(train_features.shape[0]*0.3)
 weight_decay = 0.
 learning_rate = 0.01
