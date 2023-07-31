@@ -43,13 +43,15 @@ class MultiLayerPerception(nn.Sequential):
             base=base
         )
         layer_sizes = list(map(int, layer_sizes))
+        layer_sizes = [in_features, *layer_sizes[1: -1], out_features] \
+            if len(layer_sizes) > 2 else [in_features, out_features]
         for i in range(len(layer_sizes) - 1):
             in_size, out_size = layer_sizes[i], layer_sizes[i + 1]
             layers.append(nn.Linear(in_size, out_size))
             layers.append(get_activation(activation))
             if dropout > 0.:
                 layers.append(nn.Dropout())
-        super().__init__(nn.BatchNorm1d(in_features), *layers)
+        super().__init__(*layers)
 
     train_args = {
         'num_epochs': (100, []),
@@ -110,10 +112,11 @@ class MultiLayerPerception(nn.Sequential):
                 optimizer.step()
                 print(list(self.parameters()))
                 # 记录损失
-                train_ls.append(l.item())
-                if valid_features is not None and valid_labels is not None:
-                    self.eval()
-                    valid_ls.append(loss(self(valid_features), valid_labels).item())
+                with torch.no_grad():
+                    train_ls.append(l.item())
+                    if valid_features is not None and valid_labels is not None:
+                        self.eval()
+                        valid_ls.append(loss(self(valid_features), valid_labels).item())
                 # 更新进度条
                 pbar.update(1)
             pbar.close()

@@ -100,15 +100,29 @@ class DataProcess:
             self.__test_data__[i] = d
 
     def __norm_preprocess__(self):
+        """
+        进行标准化预处理。只处理特征集。
+        :return: None
+        """
         # 预处理训练集
-        for i, d in enumerate(self.__train_data__):
-            d = self.__normalize__(d)
-            self.__train_data__[i] = d
-        # 预处理验证集
+        train_features, _ = self.train_data
+        self.__train_data__ = [self.__normalize__(train_features), _]
+        # 标准化验证集
         if self.__valid__:
-            for i, d in enumerate(self.__valid_data__):
-                d = self.__normalize__(d)
-                self.__valid_data__[i] = d
+            valid_features, _ = self.valid_data
+            self.__valid_data__ = [self.__normalize__(valid_features), _]
+        # 标准化测试集
+        test_features, _ = self.test_data
+        self.__test_data__ = [self.__normalize__(test_features), _]
+        # # 预处理训练集
+        # for i, d in enumerate(self.__train_data__):
+        #     d = self.__normalize__(d)
+        #     self.__train_data__[i] = d
+        # # 预处理验证集
+        # if self.__valid__:
+        #     for i, d in enumerate(self.__valid_data__):
+        #         d = self.__normalize__(d)
+        #         self.__valid_data__[i] = d
 
     def __tensor_preprocess__(self):
         # 预处理训练集
@@ -143,10 +157,10 @@ class DataProcess:
         self.__valid_data__ = [self.__valid_data__[0], valid_labels]
         self.__test_data__ = [self.__test_data__[0], test_labels]
 
-    @staticmethod
-    def __get_dummies__(data):
+    def __get_dummies__(self, data):
         data = pd.DataFrame(data, columns=tools.label_names)
         dummies = pd.get_dummies(data, columns=tools.label_names)
+        self.dummies_columns = dummies.columns
         return np.array(dummies)
 
     @staticmethod

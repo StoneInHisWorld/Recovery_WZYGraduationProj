@@ -17,7 +17,7 @@
 # train_para = ['num_epochs', 'learning_rate', 'weight_decay', 'batch_size',
 #               'optimizer', 'loss', 'momentum']
 #
-# # """理论合理性存疑"""
+"""理论合理性存疑"""
 # # def RationalityCheck(func):
 # #     def wrapper():
 # #         print('警告：该类的理论合理性存疑！')

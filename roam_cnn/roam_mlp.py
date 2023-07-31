@@ -46,7 +46,7 @@ print(net)
 
 
 print('training...')
-num_epochs = 600
+num_epochs = 150
 batch_size = int(train_features.shape[0]*0.3)
 weight_decay = 0.
 learning_rate = 0.01
