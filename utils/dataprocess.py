@@ -14,15 +14,12 @@ input_files = {
 class DataProcess:
 
     @read_data(input_files)
-    # def __init__(self, **kwargs):
     def __init__(self, files: dict = None):
         self.__test_data__ = []
         self.__valid_data__ = []
         self.__train_data__ = []
         for k, v in files.items():
             setattr(self, k, v)
-        # self.__features__ = files['features']
-        # self.__labels__ = files['labels']
         self.__is_splitted__ = False
         self.__mode__ = None
         self.__prepared__ = False
@@ -68,13 +65,6 @@ class DataProcess:
             ]
         self.__is_splitted__ = True
 
-    # preprocess_args = {
-    #     'mode': ('linear', ['linear', 'none', 'one_hot']),
-    #     'need_tensor': (False, []),
-    #     'need_norm': (True, [])
-    # }
-
-    # def preprocess(self, mode='linear', need_tensor=False, need_norm=True):
     def preprocess(self, need: frozenset= frozenset()):
         """
         对对象中数据进行预处理，将对象的__prepared__标记为True
@@ -84,12 +74,6 @@ class DataProcess:
         assert self.__prepared__ is False, '已经进行了预处理！'
         func = frozenset(['flatten', 'norm', 'tensor', 'onehot'])
         assert need.issubset(func), f'无法满足的需求{need}, 提供的功能包括{func}'
-        # mode_list = ['linear', 'none', 'one_hot']
-        # assert mode in mode_list, f'mode参数{mode}须为{mode_list}其中一个'
-        # mode, need_tensor, need_norm = parameters
-        # if mode == 'linear':
-        #     self.__mode__ = 'linear'
-        #     self.__linear_preprocess__(need_norm=need_norm, need_tensor=need_tensor)
         if 'flatten' in need:
             self.__flatten_preprocess__()
         if 'onehot' in need:
@@ -125,13 +109,6 @@ class DataProcess:
             for i, d in enumerate(self.__valid_data__):
                 d = self.__normalize__(d)
                 self.__valid_data__[i] = d
-        # # 预处理训练集
-        # train_features, _ = self.__train_data__
-        # self.__train_data__ = [self.__normalize__(train_features), _]
-        # # 预处理验证集
-        # if self.__valid__:
-        #     valid_features, _ = self.__valid_data__
-        #     self.__valid_data__ = [self.__normalize__(valid_features), _]
 
     def __tensor_preprocess__(self):
         # 预处理训练集
@@ -150,11 +127,6 @@ class DataProcess:
 
     def __onehot_preprocess__(self):
         # 合并标签集
-        # _, train_labels = self.__train_data__
-        # __, valid_labels = self.__valid_data__ \
-        #     if self.__valid__ else np.array([]), np.array([])
-        # ___, test_labels = self.__test_data__
-        # labels = np.hstack([train_labels, valid_labels, test_labels])
         labels = (self.__train_data__[1], self.__valid_data__[1], self.__test_data__[1]) \
             if self.__valid__ else (self.__train_data__[1], self.__test_data__[1])
         labels = np.vstack(labels)
@@ -170,44 +142,12 @@ class DataProcess:
         self.__train_data__ = [self.__train_data__[0], train_labels]
         self.__valid_data__ = [self.__valid_data__[0], valid_labels]
         self.__test_data__ = [self.__test_data__[0], test_labels]
-        # self.__train_data__ = [_, self.__get_dummies__(train_labels)]
-        # # 预处理验证集
-        # if self.__valid__:
-        #     _, valid_labels = self.__valid_data__
-        #     self.__valid_data__ = [_, self.__get_dummies__(valid_labels)]
-        # # 预处理测试集
-        # _, test_labels = self.__test_data__
-        # self.__test_data__ = [_, self.__get_dummies__(test_labels)]
 
     @staticmethod
     def __get_dummies__(data):
         data = pd.DataFrame(data, columns=tools.label_names)
         dummies = pd.get_dummies(data, columns=tools.label_names)
         return np.array(dummies)
-
-
-
-    # def __linear_preprocess__(self, need_norm=True, need_tensor=True):
-    #     assert self.__mode__ == 'linear'
-    #     assert self.__is_splitted__, '请先进行数据集分割，再进行数据预处理！'
-    #     # 预处理训练集
-    #     for i, d in enumerate(self.__train_data__):
-    #         d = self.__flatten__(d)
-    #         d = self.__normalize__(d) if need_norm else d
-    #         d = self.__to_Tensor__(d) if need_tensor else d
-    #         self.__train_data__[i] = d
-    #     # 预处理验证集
-    #     if self.__valid__:
-    #         for i, d in enumerate(self.__valid_data__):
-    #             d = self.__flatten__(d)
-    #             d = self.__normalize__(d) if need_norm else d
-    #             d = self.__to_Tensor__(d) if need_tensor else d
-    #             self.__valid_data__[i] = d
-    #     # 预处理测试集
-    #     for i, d in enumerate(self.__test_data__):
-    #         d = self.__flatten__(d)
-    #         d = self.__to_Tensor__(d, requires_grad=False) if need_tensor else d
-    #         self.__test_data__[i] = d
 
     @staticmethod
     def __to_Tensor__(data, requires_grad=True):
@@ -231,10 +171,15 @@ class DataProcess:
 
     @staticmethod
     def accuracy(y_hat, y):
-        y_hat, y = np.array(y_hat), np.array(y)
+        if y_hat is torch.Tensor or y is torch.Tensor:
+            equal_func = torch.equal
+        else:
+            equal_func = np.array_equal
+        # y_hat, y = np.array(y_hat), np.array(y)
         correct = 0
         for i in range(len(y)):
-            if np.array_equal(y_hat[i], y[i]):
+            # if np.array_equal(y_hat[i], y[i]):
+            if equal_func(y_hat[i], y[i]):
                 correct += 1
         acc = correct / len(y)
         return acc
