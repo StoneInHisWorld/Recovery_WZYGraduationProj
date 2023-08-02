@@ -1,5 +1,6 @@
 """以下是工具函数"""
 import os
+import random
 
 import numpy as np
 import pandas as pd
@@ -60,6 +61,25 @@ def get_optimizer(net, optim_str, learning_rate, weight_decay, momentum) -> torc
             weight_decay=weight_decay
         )
 
+
+def load_array(features, labels, batch_size, num_epochs, shuffle=True):
+    """
+    加载训练数据
+    :param shuffle: 每次输出批次是否打乱数据
+    :param num_epochs: 迭代次数
+    :param features: 特征集
+    :param labels: 标签集
+    :param batch_size: 批量大小
+    :return 不断产出数据的迭代器
+    """
+    num_examples = features.shape[0]
+    assert batch_size <= num_examples, f'批量大小{batch_size}需要小于样本数量{num_examples}'
+    examples_indices = list(range(num_examples))
+    # 每次供给一个批次的数据
+    for _ in range(num_epochs):
+        if shuffle:
+            random.shuffle(examples_indices)
+        yield features[examples_indices][:batch_size], labels[examples_indices][:batch_size]
 
 def try_gpu(i=0):
     """

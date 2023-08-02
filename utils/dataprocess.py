@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import torch
+from matplotlib import pyplot as plt
 
 import utils.tool_func as tools
 from utils.decorators import read_data
@@ -200,6 +201,22 @@ class DataProcess:
         acc = correct / len(y)
         compare = stack_fun((y, y_hat))
         return acc, compare
+
+    @staticmethod
+    def plot_data(X, y, title=None, xlabel=None, ylabel=None, savefig_as=None,
+                  show=True):
+        plt.plot(X, y)
+        if xlabel:
+            plt.xlabel(xlabel)
+        if ylabel:
+            plt.ylabel(ylabel)
+        if title:
+            plt.title(title)
+        if savefig_as:
+            plt.savefig(savefig_as)
+        if show:
+            plt.show()
+
 
     @property
     def train_data(self):

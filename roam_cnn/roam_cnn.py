@@ -1,5 +1,6 @@
-from network.mlp import MultiLayerPerception
+from network.cnn import CNN
 from utils.dataprocess import DataProcess
+import utils.tool_func as tools
 
 print('collecting data...')
 small_data = False
@@ -8,28 +9,40 @@ label_fileName = '../vortex/small_labels.csv' if small_data else '../vortex/labe
 data_process = DataProcess(__features__=feature_dir, __labels__=label_fileName)
 
 print('preprocessing...')
-"""神经网络"""
 data_process.split_data(0.8, 0.1, 0.1)
-data_process.preprocess(need=frozenset(['tensor', 'norm', 'flatten']))
+data_process.preprocess(need=frozenset(['tensor', 'flatten', 'norm', 'onehot']))
+dummies_columns = data_process.dummies_columns
 train_features, train_labels = data_process.train_data
 test_features, test_labels = data_process.test_data
 valid_features, valid_labels = data_process.valid_data
 
+"""带softmax的感知机"""
 print('constructing network...')
-net = MultiLayerPerception(
-    train_features.shape[1], train_labels.shape[1],
-    activation='Sigmoid', base=8, para_init='zero'
+activation = 'ReLU'
+para_init = 'xavier'
+# 获取两端口输出维度
+fir_out = len([d for d in dummies_columns if tools.label_names[0] in d])
+sec_out = len([d for d in dummies_columns if tools.label_names[1] in d])
+net = CNN(
+    train_features.shape[1:], (fir_out, sec_out),
+    activation=activation, para_init=para_init, dropout=0.2,
+    in_channels=[1, 16, 16, 32, 32, 64, 64, 128],
+    out_channels=[16, 16, 32, 32, 64, 64, 128, 128],
+    kernel_sizes=[(3, 3) for _ in range(8)], strides=[2 for _ in range(8)],
+    bn_shapes=[(128, 128), (64, 64), (32, 32), (16, 16), (8, 8), (4, 4), (2, 2)],
+    momentums=[0.95 for _ in range(7)],
 )
 print(net)
 
 print('training...')
-num_epochs = 150
-batch_size = int(train_features.shape[0] * 1)
-weight_decay = 0.
-learning_rate = 0.01
-momentum = 0.01
+num_epochs = 20
+# batch_size = int(train_features.shape[0]*0.3)
+batch_size = 32
+weight_decay = 0
+learning_rate = 0.001
+momentum = 0e0
 loss = 'mse'
-optimizer = 'SGD'
+optimizer = 'Adam'
 train_ls, valid_ls = net.train_(
     train_features, train_labels, valid_features, valid_labels,
     num_epochs=num_epochs, batch_size=batch_size, weight_decay=weight_decay,
@@ -50,6 +63,7 @@ if valid_ls:
     )
 
 print('testing...')
-acc, res = net.test(test_features, test_labels)
-print('预测结果为：', res)
+preds = net.predict(test_features)
+acc, compare = data_process.accuracy(preds, test_labels)
+print('预测结果为：', compare)
 print('准确率为：', acc)

@@ -27,7 +27,7 @@ def unpack_kwargs(allow_args: dict[str, tuple]):
             按允许输入参数排列顺序拆解输入参数，或者赋值为其默认值
             :param args: train_func的位置参数
             :param kwargs: train_func的关键字参数
-            :return:
+            :return: 包装函数
             """
             parameters = ()
             for k in allow_args.keys():

@@ -1,5 +1,3 @@
-from matplotlib import pyplot as plt
-
 from network.softmax_mlp import SoftmaxMLP
 from utils.dataprocess import DataProcess
 
@@ -45,23 +43,17 @@ train_ls, valid_ls = net.train_(
 
 
 print('plotting...')
-save_fig = False
-plt.plot(range(num_epochs), train_ls)
-plt.xlabel('num_epochs')
-plt.ylabel(f'train_loss({loss})')
-plt.title(f'optimizer{optimizer}')
-if save_fig:
-    plt.savefig(f'loss_plot/num_epochs{num_epochs}batch_size{batch_size}'
-                f'weight_decay{weight_decay}learning_rate{learning_rate}'
-                f'momentum{momentum}.jpg')
-plt.show()
+data_process.plot_data(
+    range(num_epochs), train_ls, xlabel='num_epochs', ylabel=f'train_loss({loss})',
+    title=f'optimizer{optimizer}',
+    savefig_as=f'loss_plot/num_epochs{num_epochs}batch_size{batch_size}'
+               f'weight_decay{weight_decay}learning_rate{learning_rate}'
+               f'momentum{momentum}.jpg'
+)
 if valid_ls:
-    plt.plot(range(num_epochs), valid_ls)
-    plt.xlabel('num_epochs')
-    plt.ylabel(f'valid_loss({loss})')
-    if save_fig:
-        pass
-    plt.show()
+    data_process.plot_data(
+        range(num_epochs), valid_ls, xlabel='num_epochs', ylabel=f'valid_loss({loss})'
+    )
 
 
 print('testing...')
