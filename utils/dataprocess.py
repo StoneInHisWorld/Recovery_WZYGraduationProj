@@ -155,7 +155,7 @@ class DataProcess:
         train_labels, valid_labels, test_labels = res
         self.__train_data__ = [self.__train_data__[0], train_labels]
         self.__valid_data__ = [self.__valid_data__[0], valid_labels]
-        self.__test_data__ = [self.__test_data__[0], test_labels]
+        # self.__test_data__ = [self.__test_data__[0], test_labels]
 
     def __get_dummies__(self, data):
         data = pd.DataFrame(data, columns=tools.label_names)
@@ -185,10 +185,12 @@ class DataProcess:
 
     @staticmethod
     def accuracy(y_hat, y):
-        if y_hat is torch.Tensor or y is torch.Tensor:
+        if type(y_hat) is torch.tensor or type(y) is torch.Tensor:
             equal_func = torch.equal
+            stack_fun = torch.hstack
         else:
             equal_func = np.array_equal
+            stack_fun = np.hstack
         # y_hat, y = np.array(y_hat), np.array(y)
         correct = 0
         for i in range(len(y)):
@@ -196,7 +198,8 @@ class DataProcess:
             if equal_func(y_hat[i], y[i]):
                 correct += 1
         acc = correct / len(y)
-        return acc
+        compare = stack_fun((y, y_hat))
+        return acc, compare
 
     @property
     def train_data(self):

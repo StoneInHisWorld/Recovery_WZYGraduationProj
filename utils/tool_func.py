@@ -15,6 +15,7 @@ train_para = ['num_epochs', 'learning_rate', 'weight_decay', 'batch_size',
               'optimizer', 'loss', 'momentum']
 support_files = ['img', 'csv']
 label_names = ['OAM1', 'OAM2']
+label_perfix = '_'
 
 
 def get_activation(activ_str='ReLU'):
@@ -43,7 +44,7 @@ def get_lossFunc(loss_str='mse'):
         return nn.HuberLoss()
 
 
-def get_Optimizer(net, optim_str, learning_rate, weight_decay, momentum) -> torch.optim:
+def get_optimizer(net, optim_str, learning_rate, weight_decay, momentum) -> torch.optim:
     assert optim_str in optimizers, f'不支持优化器{optim_str}, 支持的优化器包括{optimizers}'
     if optim_str == 'SGD':
         return torch.optim.SGD(
@@ -102,6 +103,7 @@ def get_readFunc(func):
 def read_data(path: str, file_type: str) -> np.ndarray:
     is_folder = True if file_type.split('/')[0] == 'folder' else False
     data = []
+    # 读取目录中的所有数据
     if is_folder:
         read_func = get_readFunc(file_type.split('/')[1])
         walk_gen = os.walk(path)

@@ -14,13 +14,13 @@ from utils.tool_func import get_activation
 class MultiLayerPerception(nn.Sequential):
 
     init_args = {
-        'activation': ('ReLU', ['ReLU', 'Sigmoid', 'Tanh', 'LeakyReLU']),
         'para_init': ('zero', ['normal', 'xavier', 'zero']),
+        'activation': ('ReLU', ['ReLU', 'Sigmoid', 'Tanh', 'LeakyReLU']),
         'dropout': (0, []),
         'base': (2, [])
     }
 
-    @init_net
+    @init_net(init_args)
     def __init__(self, in_features: int, out_features: int, parameters=None):
         """
         建立一个多层感知机。直接将变量名作为方法，输入输入数据集，就可以得到模型的输出数据集。
@@ -87,7 +87,7 @@ class MultiLayerPerception(nn.Sequential):
         num_epochs, learning_rate, weight_decay, batch_size, loss, momentum, shuffle, \
             optimizer = parameters
         loss = tool_func.get_lossFunc(loss)
-        optimizer = tool_func.get_Optimizer(
+        optimizer = tool_func.get_optimizer(
             self, optim_str=optimizer, learning_rate=learning_rate,
             weight_decay=weight_decay, momentum=momentum
         )
@@ -107,10 +107,13 @@ class MultiLayerPerception(nn.Sequential):
                 optimizer.zero_grad()
                 # 正向传播并计算损失
                 l = loss(self(X), y)
+                # 输出所有层的输出值
+                with torch.no_grad():
+                    print('\nsoftmax_res', self(X))
                 # 反向传播
                 l.backward()
                 optimizer.step()
-                print(list(self.parameters()))
+                # print(list(self.parameters()))
                 # 记录损失
                 with torch.no_grad():
                     train_ls.append(l.item())

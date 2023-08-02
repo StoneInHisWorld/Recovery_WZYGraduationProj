@@ -7,7 +7,7 @@ import utils.tool_func as tools
 
 class SoftmaxMLP(MultiLayerPerception):
 
-    def __init__(self, in_features: int, out_features: int, dummies_columns: list,
+    def __init__(self, in_features: int, out_features: int, dummies_columns: list[str],
                  **kwargs):
         """
         建立一个带softmax的多层感知机。
@@ -22,10 +22,6 @@ class SoftmaxMLP(MultiLayerPerception):
         super().__init__(in_features, out_features, **kwargs)
         self.append(nn.Softmax())
         self.dummies_columns = dummies_columns
-    # def test(self, features, labels, dummies_columns):
-    #     with torch.no_grad():
-    #         preds = self(features)
-    #         preds = torch.argmax()
 
     def predict(self, features):
         with torch.no_grad():
@@ -35,17 +31,31 @@ class SoftmaxMLP(MultiLayerPerception):
             for label_name in tools.label_names:
                 label_dummy_index = [i for i, d in enumerate(self.dummies_columns) if label_name in d]
                 index_group.append(label_dummy_index)
-            # 将组内每条预测数据中预测值最大的列赋值为1，其余赋值为0
-            last_end = 0
-            for group in index_group:
-                # part = preds[:, group]
-                max_index = torch.argmax(preds[:, group], dim=1)
-                for i in range(len(preds)):
-                    for j in group:
-                        preds[i, j] = 1 if j == max_index[i] + last_end else 0
-                last_end = group[-1] + 1
-                # for i, row in enumerate(preds[:, group]):
-                #     for j, col in enumerate(row):
-                #         preds[:, group][i, j] = 1 if j == max_index[i] else 0
+            # # 将组内每条预测数据中预测值最大的列赋值为1，其余赋值为0
+            # last_end = 0
+            # for group in index_group:
+            #     # part = preds[:, group]
+            #     max_index = torch.argmax(preds[:, group], dim=1)
+            #     for i in range(len(preds)):
+            #         for j in group:
+            #             preds[i, j] = 1 if j == max_index[i] + last_end else 0
+            #     last_end = group[-1] + 1
+            #     # for i, row in enumerate(preds[:, group]):
+            #     #     for j, col in enumerate(row):
+            #     #         preds[:, group][i, j] = 1 if j == max_index[i] else 0
+            fact = []
+            # 将组内预测值最大的列，赋其列名为当组预测值
+            for pred in preds:
+                row_fact = []
+                last_end = 0
+                for i, group in enumerate(index_group):
+                    group_name = tools.label_names[i]
+                    max_col = torch.argmax(pred[group], dim=0).item()
+                    fact_value = self.dummies_columns[last_end + max_col].\
+                        replace(group_name, "", 1).replace(tools.label_perfix, "", 1)
+                    row_fact.append(float(fact_value))
+                    last_end = group[-1] + 1
+                fact.append(row_fact)
+            preds = torch.tensor(fact, device=self.__device__)
             return preds
 

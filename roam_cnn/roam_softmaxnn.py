@@ -4,7 +4,7 @@ from network.softmax_mlp import SoftmaxMLP
 from utils.dataprocess import DataProcess
 
 print('collecting data...')
-small_data = True
+small_data = False
 feature_dir = '../vortex/small_feature' if small_data else '../vortex/0823SPECKLE'
 label_fileName = '../vortex/small_labels.csv' if small_data else '../vortex/labels.csv'
 data_process = DataProcess(__features__=feature_dir, __labels__=label_fileName)
@@ -29,14 +29,14 @@ print(net)
 
 
 print('training...')
-num_epochs = 10
+num_epochs = 300
 # batch_size = int(train_features.shape[0]*0.3)
-batch_size = 32
-weight_decay = 0.
-learning_rate = 0.1
-momentum = 0.
-loss = 'mse'
-optimizer = 'SGD'
+batch_size = 128
+weight_decay = 1e-1
+learning_rate = 5e-2
+momentum = 0e0
+loss = 'l1'
+optimizer = 'Adam'
 train_ls, valid_ls = net.train_(
     train_features, train_labels, valid_features, valid_labels,
     num_epochs=num_epochs, batch_size=batch_size, weight_decay=weight_decay,
@@ -45,23 +45,27 @@ train_ls, valid_ls = net.train_(
 
 
 print('plotting...')
-# plt.plot(range(num_epochs), train_ls)
-# plt.xlabel('num_epochs')
-# plt.ylabel(f'train_loss({loss})')
-# plt.title(f'optimizer{optimizer}')
-# plt.savefig(f'loss_plot/num_epochs{num_epochs}batch_size{batch_size}'
-#             f'weight_decay{weight_decay}learning_rate{learning_rate}'
-#             f'momentum{momentum}.jpg')
-# plt.show()
-# if valid_ls:
-#     plt.plot(range(num_epochs), valid_ls)
-#     plt.xlabel('num_epochs')
-#     plt.ylabel(f'valid_loss({loss})')
-#     plt.show()
+save_fig = False
+plt.plot(range(num_epochs), train_ls)
+plt.xlabel('num_epochs')
+plt.ylabel(f'train_loss({loss})')
+plt.title(f'optimizer{optimizer}')
+if save_fig:
+    plt.savefig(f'loss_plot/num_epochs{num_epochs}batch_size{batch_size}'
+                f'weight_decay{weight_decay}learning_rate{learning_rate}'
+                f'momentum{momentum}.jpg')
+plt.show()
+if valid_ls:
+    plt.plot(range(num_epochs), valid_ls)
+    plt.xlabel('num_epochs')
+    plt.ylabel(f'valid_loss({loss})')
+    if save_fig:
+        pass
+    plt.show()
 
 
 print('testing...')
 preds = net.predict(test_features)
-acc = data_process.accuracy(preds, test_labels)
-print('预测结果为：', preds)
+acc, compare = data_process.accuracy(preds, test_labels)
+print('预测结果为：', compare)
 print('准确率为：', acc)
