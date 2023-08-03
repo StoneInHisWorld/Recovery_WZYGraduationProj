@@ -31,18 +31,6 @@ class SoftmaxMLP(MultiLayerPerception):
             for label_name in tools.label_names:
                 label_dummy_index = [i for i, d in enumerate(self.dummies_columns) if label_name in d]
                 index_group.append(label_dummy_index)
-            # # 将组内每条预测数据中预测值最大的列赋值为1，其余赋值为0
-            # last_end = 0
-            # for group in index_group:
-            #     # part = preds[:, group]
-            #     max_index = torch.argmax(preds[:, group], dim=1)
-            #     for i in range(len(preds)):
-            #         for j in group:
-            #             preds[i, j] = 1 if j == max_index[i] + last_end else 0
-            #     last_end = group[-1] + 1
-            #     # for i, row in enumerate(preds[:, group]):
-            #     #     for j, col in enumerate(row):
-            #     #         preds[:, group][i, j] = 1 if j == max_index[i] else 0
             fact = []
             # 将组内预测值最大的列，赋其列名为当组预测值
             for pred in preds:
